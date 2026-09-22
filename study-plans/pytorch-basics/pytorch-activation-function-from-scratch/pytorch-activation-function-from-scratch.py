@@ -10,7 +10,7 @@ def activate(x: torch.Tensor, method: str = "relu") -> torch.Tensor:
     elif method == "sigmoid":
         return 1.0 /( 1.0 + torch.exp(-x))
     elif method == "tanh":
-        magnitude = torch.where(x >= 0, x, -x)
+        magnitude = torch.abs(x)
         decay = torch.exp(-2 * magnitude)
         positive = (1 - decay) / (1 + decay)
         return torch.where(x >= 0, positive, -positive)
