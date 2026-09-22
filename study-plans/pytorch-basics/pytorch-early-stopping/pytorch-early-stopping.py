@@ -6,40 +6,39 @@ def train_with_early_stopping(model: nn.Module, train_loader: torch.utils.data.D
     Returns train_losses and val_losses as float lists, and stopped_epoch as an int.
     """
     train_losses, val_losses = [], []
-    epochs_without_improvement = 0
     best_val_loss = float("inf")
-    stopped_epoch =max_epochs
+    stopped_epoch = max_epochs
+    epochs_without_improvement = 0
 
     for epoch in range(max_epochs):
-        model.train()
+        model.train()    
 
-        total_loss = 0.0
-        for x, y in train_loader:
+        train_loss = 0.0
+        for x, t in train_loader:
             optimizer.zero_grad()
-    
-            pred = model(x)
-            loss = criterion(pred, y)
             
+            y = model(x)
+            loss = criterion(y, t)
+    
             loss.backward()
             optimizer.step()
+            
+            train_loss += loss.item()
 
-            total_loss += loss.item()
-
-        train_loss = total_loss/len(train_loader)
+        train_loss = train_loss/len(train_loader)
         train_losses.append(train_loss)
 
-        total_loss = 0.0
         model.eval()
+        val_loss = 0.0
         with torch.no_grad():
-            for x, y in val_loader:
-                pred = model(x)
-                loss = criterion(pred, y)
-                total_loss += loss.item()
+            for x, t in val_loader:
+                y = model(x)
+                loss = criterion(y, t)
+                val_loss += loss.item()
 
-        val_loss = total_loss/len(val_loader)
+        val_loss = val_loss/len(val_loader)
         val_losses.append(val_loss)
 
-        # Early Stopping
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             epochs_without_improvement = 0
@@ -54,6 +53,5 @@ def train_with_early_stopping(model: nn.Module, train_loader: torch.utils.data.D
     res = {"train_losses": train_losses,
           "val_losses": val_losses,
           "stopped_epoch": stopped_epoch}
-    
+
     return res
-                
