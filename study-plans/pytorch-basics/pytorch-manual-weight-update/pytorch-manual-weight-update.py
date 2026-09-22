@@ -7,7 +7,6 @@ def manual_train_step(model: nn.Module, X: torch.Tensor, y: torch.Tensor, criter
     """
     model.train()
 
-    
     preds = model(X)
     loss = criterion(preds, y)
     loss.backward()
@@ -17,7 +16,6 @@ def manual_train_step(model: nn.Module, X: torch.Tensor, y: torch.Tensor, criter
             param -= lr*param.grad
 
     for param in model.parameters():
-        if param.grad is not None:
-            param = param.grad.zero_()
-        
+        param.grad.zero_()
+
     return loss.item()
