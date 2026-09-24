@@ -24,22 +24,20 @@ class CustomSGD(torch.optim.Optimizer):
             params = group["params"]
 
             for param in params:
-                
                 if param.grad is None:
                     continue
-                    
-                grad = param.grad
-                state = self.state[param]
 
+                grad = param.grad
+
+                state = self.state[param]
                 if "velocity" not in state:
                     state["velocity"] = torch.zeros_like(param)
 
                 velocity = state["velocity"]
-
                 velocity *= momentum
                 velocity += grad
 
-                param -= lr*velocity
-
-
+                param -= lr*velocity 
+            
+        
         return loss
