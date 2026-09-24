@@ -8,5 +8,5 @@ def scaled_dot_product_attention(Q: torch.Tensor, K: torch.Tensor, V: torch.Tens
     d_k = Q.shape[-1]
     scores /= d_k**0.5
     attention = torch.softmax(scores, dim = -1)
-    
-    return attention@V 
+
+    return attention@V
