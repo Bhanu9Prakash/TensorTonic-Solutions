@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class Conv2d(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int):
@@ -18,17 +19,12 @@ class Conv2d(nn.Module):
         Cout = self.out_channels
         Hout, Wout = H - K + 1, W - K + 1
 
-        output = torch.zeros((N, Cout, Hout, Wout))
+        patches = F.unfold(x, kernel_size = K) # N, Cin*K*K, Hout*Wout
+        weight = self.weight.reshape(Cout, Cin*K*K) # Cout, Cin*K*K
 
-        for n in range(N):
-            for out in range(Cout):
-                for h in range(Hout):
-                    for w in range(Wout):
-                        param = x[n, :, h:h+K, w:w+K]
-                        kernel = self.weight[out]
-                        bias = self.bias[out]
-
-                        output[n, out, h, w] = (param*kernel).sum() + bias
-                        
+        output = weight@patches
+        output = output + self.bias.view(1, Cout, 1)
+        
+        output = output.reshape((N, Cout, Hout, Wout))
         
         return output
