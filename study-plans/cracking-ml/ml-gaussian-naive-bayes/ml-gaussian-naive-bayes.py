@@ -9,35 +9,24 @@ def gaussian_naive_bayes(X_train: list, y_train: list, X_test: list) -> list:
     X_test = np.array(X_test)
 
     classes = np.unique(y_train)
-
-    mean, variance, prior = {}, {}, {}
-
+    means, variances, priors = {}, {}, {}
+    
     for c in classes:
         X_c = X_train[y_train == c]
-
-        mean[c] = np.mean(X_c, axis=0)
-        variance[c] = np.var(X_c, axis=0) + 1e-9
-        prior[c] = len(X_c) / len(X_train)
+        means[c], variances[c] = np.mean(X_c, axis = 0), np.var(X_c, axis = 0) + 1e-9
+        priors[c] = len(X_c)/len(X_train)
 
     predictions = []
 
-    for example in X_test:
-        score = []
-
+    for x in X_test:
+        scores = []
         for c in classes:
-            mean_c = mean[c]
-            variance_c = variance[c]
-
-            log_likelihood = -0.5 * np.sum(
-                np.log(2 * np.pi * variance_c)
-                + ((example - mean_c) ** 2) / variance_c
-            )
-
-            log_prior = np.log(prior[c])
-
-            score.append(log_prior + log_likelihood)
-
-        prediction = classes[np.argmax(score)]
+            mean, variance = means[c], variances[c]
+            log_likelihood = -0.5*((np.log(2*np.pi*variance)) + ((x - mean)**2/(variance)) )
+            log_likelihood = np.sum(log_likelihood)
+            log_prior = np.log(priors[c])
+            scores.append(log_likelihood + log_prior)
+        prediction = classes[np.argmax(scores)]
         predictions.append(prediction)
 
     return predictions
