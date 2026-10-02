@@ -1,44 +1,149 @@
 from fractions import Fraction
 import numpy as np
 
-def cart_regress(X_train: list, y_train: list, X_test: list, max_depth: int = 5, min_samples: int = 2) -> list:
-    X_train = np.asarray(X_train, dtype=np.float64)
-    y_train = np.asarray(y_train, dtype=np.float64)
-    X_test = np.asarray(X_test, dtype=np.float64)
+def cart_regress(
+    X_train: list,
+    y_train: list,
+    X_test: list,
+    max_depth: int = 5,
+    min_samples: int = 2
+) -> list:
 
-    def impurity(values):
-        exact = [Fraction(float(value)) for value in values]
-        mean = sum(exact) / len(exact)
-        return sum((value - mean) ** 2 for value in exact) / len(exact)
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+    X_test = np.array(X_test)
 
-    def leaf(values):
-        return {"leaf": True, "value": float(np.mean(values))}
+    def calculate_mse(values):
+        # Use exact arithmetic to avoid floating-point tie errors
+        values = [Fraction(float(value)) for value in values]
 
-    def build(X, values, depth):
-        if depth >= max_depth or len(values) < min_samples or len(np.unique(values)) == 1:
-            return leaf(values)
-        parent = impurity(values)
-        best_gain, best_feature, best_threshold = 0.0, None, None
-        for feature in range(X.shape[1]):
-            for threshold in np.unique(X[:, feature]):
+        mean = sum(values) / len(values)
+
+        return sum(
+            (value - mean) ** 2
+            for value in values
+        ) / len(values)
+
+    def best_split(X, y):
+
+        features = X.shape[1]
+
+        best_score = None
+        best_feature = None
+        best_threshold = None
+
+        for feature in range(features):
+
+            # Use actual feature values as thresholds
+            thresholds = np.unique(X[:, feature])
+
+            for threshold in thresholds:
+
                 left = X[:, feature] <= threshold
-                if not np.any(left) or np.all(left):
+                right = ~left
+
+                # Skip invalid splits
+                if not np.any(left) or not np.any(right):
                     continue
-                left_weight = Fraction(int(np.sum(left)), len(values))
-                gain = parent - left_weight * impurity(values[left]) - (1 - left_weight) * impurity(values[~left])
-                if gain > best_gain:
-                    best_gain, best_feature, best_threshold = gain, feature, threshold
-        if best_feature is None:
-            return leaf(values)
-        left = X[:, best_feature] <= best_threshold
-        return {"leaf": False, "feature": best_feature, "threshold": best_threshold,
-                "left": build(X[left], values[left], depth + 1),
-                "right": build(X[~left], values[~left], depth + 1)}
 
-    def predict_one(node, row):
-        while not node["leaf"]:
-            node = node["left"] if row[node["feature"]] <= node["threshold"] else node["right"]
-        return node["value"]
+                mse_left = calculate_mse(y[left])
+                mse_right = calculate_mse(y[right])
 
-    tree = build(X_train, y_train, 0)
-    return [round(float(predict_one(tree, row)), 4) for row in X_test]
+                left_weight = Fraction(
+                    int(np.sum(left)),
+                    len(y)
+                )
+
+                right_weight = 1 - left_weight
+
+                score = (
+                    left_weight * mse_left
+                    + right_weight * mse_right
+                )
+
+                # < keeps the first split when there is a tie
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best_feature = feature
+                    best_threshold = threshold
+
+        return best_feature, best_threshold
+
+    def build_tree(X, y, depth=0):
+
+        prediction = np.mean(y)
+
+        if (
+            depth >= max_depth
+            or len(y) < min_samples
+            or np.all(y == y[0])
+        ):
+            return {
+                "prediction": prediction
+            }
+
+        feature, threshold = best_split(X, y)
+
+        # No valid split
+        if feature is None:
+            return {
+                "prediction": prediction
+            }
+
+        left = X[:, feature] <= threshold
+        right = ~left
+
+        left_tree = build_tree(
+            X[left],
+            y[left],
+            depth + 1
+        )
+
+        right_tree = build_tree(
+            X[right],
+            y[right],
+            depth + 1
+        )
+
+        return {
+            "feature": feature,
+            "threshold": threshold,
+            "left": left_tree,
+            "right": right_tree
+        }
+
+    def predict_one(X, tree):
+
+        if "prediction" in tree:
+            return tree["prediction"]
+
+        feature = tree["feature"]
+        threshold = tree["threshold"]
+
+        if X[feature] <= threshold:
+            return predict_one(
+                X,
+                tree["left"]
+            )
+
+        return predict_one(
+            X,
+            tree["right"]
+        )
+
+    tree = build_tree(
+        X_train,
+        y_train
+    )
+
+    predictions = []
+
+    for row in X_test:
+        predictions.append(
+            round(
+                float(predict_one(row, tree)),
+                4
+            )
+        )
+
+    return predictions
