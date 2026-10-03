@@ -44,6 +44,7 @@ Verified machine learning implementations completed on [TensorTonic](https://www
 | Linear Regression from Scratch | Train linear regression from scratch with mean squared error gradients for weights and bias. | https://www.tensortonic.com/problems/ml-linear-regression-from-scratch |
 | Logistic Regression from Scratch | Train binary logistic regression from scratch using sigmoid probabilities, cross-entropy gradients, and gradient descent. | https://www.tensortonic.com/problems/ml-logistic-regression |
 | Permutation Feature Importance | Measure permutation feature importance by shuffling each feature and comparing the accuracy drop against a baseline. | https://www.tensortonic.com/problems/ml-perm-importance |
+| Random Forest from Scratch | Implement a random forest classifier with bootstrap sampling, random feature subsets at each CART split, and majority voting. | https://www.tensortonic.com/problems/ml-random-forest |
 | Ridge Regression | Train Ridge regression with gradient descent, L2-regularized weights, and an unregularized bias term. | https://www.tensortonic.com/problems/ml-ridge-regression |
 | Softmax Regression | Train multiclass softmax regression with stable probabilities, one-hot targets, cross-entropy gradients, and gradient descent. | https://www.tensortonic.com/problems/ml-softmax-regression |
 | SVM with Hinge Loss (SGD) | Train a linear SVM with sequential SGD updates on hinge loss, L2 weight regularization, and signed class predictions. | https://www.tensortonic.com/problems/ml-svm-hinge-sgd |
